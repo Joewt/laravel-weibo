@@ -103,6 +103,15 @@ footer {
 }
 
 
+/* header */
+
+#logout {
+  cursor: default;
+  &:hover{
+    background-color: transparent;
+  }
+}
+
 
 aside {
   section {
