@@ -8,6 +8,14 @@ use Auth;
 
 class SessionsController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('guest',[
+            'only' => ['create']
+        ]);
+    }
+
     /**
      * 显示登录页
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
@@ -33,7 +41,7 @@ class SessionsController extends Controller
         //记住我功能 attempt第二个参数，
         if(Auth::attempt($credentials,$request->has('remember'))){
             session()->flash('success',"登录成功");
-            return redirect()->route('users.show',[Auth::user()]);
+            return redirect()->intended(route('users.show',[Auth::user()]));
         } else {
             session()->flash('danger',"您的邮箱或用户名不匹配");
             return redirect()->back();
