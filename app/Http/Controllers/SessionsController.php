@@ -40,8 +40,15 @@ class SessionsController extends Controller
         //使用email字段在数据库中查找，并对比password的结果
         //记住我功能 attempt第二个参数，
         if(Auth::attempt($credentials,$request->has('remember'))){
-            session()->flash('success',"登录成功");
-            return redirect()->intended(route('users.show',[Auth::user()]));
+            if(Auth::user()->activated){
+                session()->flash('success',"欢迎回来");
+                return redirect()->intended(route('users.show',[Auth::user()]));
+            } else {
+                Auth::logout();
+                session()->flash('warning',"请检测邮箱进行激活");
+                return redirect('/');
+            }
+
         } else {
             session()->flash('danger',"您的邮箱或用户名不匹配");
             return redirect()->back();
@@ -49,6 +56,10 @@ class SessionsController extends Controller
         return;
     }
 
+    /**
+     * 退出登录
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function destroy()
     {
         Auth::logout();

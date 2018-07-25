@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Auth;
+use Mail;
 
 class UsersController extends Controller
 {
@@ -13,7 +14,7 @@ class UsersController extends Controller
         //laravel中间件
         //只让登陆用户查看
         $this->middleware('auth',[
-           'except' => ['show','store','create','index']
+           'except' => ['show','store','create','index','confirmEmail']
         ]);
 
         //只让未登陆用户查看 注册页
@@ -69,10 +70,10 @@ class UsersController extends Controller
             'password' => bcrypt($request->password),
         ]);
 
-        Auth::login($user);
-
-        session()->flash('success','注册成功');
-        return redirect()->route('users.show',[$user]);
+        //Auth::login($user);
+        $this->sendEmailConfirmationTo($user);
+        session()->flash('success','注册成功,请查阅邮箱进行激活');
+        return redirect('/');
     }
 
     /**
@@ -130,6 +131,38 @@ class UsersController extends Controller
         $user->delete();
         session()->flash('success','删除成功');
         return back();
+    }
+
+
+    /**
+     * 发送邮件
+     * @param $user
+     */
+    public function sendEmailConfirmationTo($user)
+    {
+        $view = "emails.confirm";
+        $data = compact('user');
+        $to   = $user->email;
+        $subject = "感谢注册";
+        Mail::send($view, $data, function($message) use ($to, $subject){
+            $message->to($to)->subject($subject);
+        });
+
+    }
+
+    /**
+     * 注册用户邮件确认
+     * @param $token
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function confirmEmail($token)
+    {
+        $user = User::where('activation_token',$token)->firstOrFail();
+        $user->activated = true;
+        $user->activation_token = null;
+        Auth::login($user);
+        session()->flash('success','恭喜注册成功');
+        return redirect()->route('users.show',[$user]);
     }
 
 
